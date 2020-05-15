@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:background="#000000"
+        tools:context="._backup.SelfBackupActivity" android:orientation="vertical">
+
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_marginBottom="16dp"
+            android:layout_height="wrap_content">
+        <Button
+                android:text="Backup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/bakBackupBtn"
+                android:paddingRight="8dp"
+                android:layout_weight="1"/>
+
+        <Button
+                android:text="Restore"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/bakRestoreBtn"
+                android:paddingLeft="8dp"
+                android:layout_weight="1"/>
+    </LinearLayout>
+
+    <ScrollView
+            android:layout_width="match_parent"
+            android:id="@+id/bakScrollView"
+            android:layout_height="match_parent">
+        <TextView
+                android:text=""
+                android:lineSpacingMultiplier="1.25"
+                android:layout_width="match_parent"
+                android:textColor="#FFFFFF"
+                android:layout_height="wrap_content"
+                android:id="@+id/bakConsoleText" android:layout_weight="1"
+                android:fontFamily="monospace"/>
+    </ScrollView>
+
+</LinearLayout>
