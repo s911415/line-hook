@@ -19,6 +19,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.Locale;
 
 public class SelfBackupActivity extends Activity {
@@ -202,7 +203,20 @@ public class SelfBackupActivity extends Activity {
     }
 
     private void backup() {
-        final String[] backFolders = new String[]{"databases", "files", "no_backup", "shared_prefs"};
+        final LinkedList<String> backFolders = new LinkedList<>();
+        backFolders.add("databases");
+        backFolders.add("files");
+        backFolders.add("no_backup");
+        backFolders.add("shared_prefs");
+
+        File dataRootDir = new File(path);
+        for (File f : dataRootDir.listFiles()) {
+            String name = f.getName();
+
+            if (name.startsWith("theme")) {
+                backFolders.add(name);
+            }
+        }
 
         final File targetFile = new File(
                 backupTargetFolder,
@@ -241,9 +255,7 @@ public class SelfBackupActivity extends Activity {
 
                 showMessage("Backup to \"" + targetFile.getAbsolutePath() + "\".");
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -253,25 +265,31 @@ public class SelfBackupActivity extends Activity {
         if (!isFromRestore) {
             Intent intent = new Intent()
                     .setType("*/*")
+                    // .setAction(Intent.ACTION_OPEN_DOCUMENT);
                     .setAction(Intent.ACTION_GET_CONTENT);
 
+            // startActivityForResult(intent, CHOOSE_RESTORE_FILE);
             startActivityForResult(Intent.createChooser(intent, "Select a file"), CHOOSE_RESTORE_FILE);
             return;
         }
 
-        final File bakFile = new File(oldIntent.getStringExtra(RESTORE_FILE_PATH_KEY));
+        final Uri uri = Uri.parse(oldIntent.getStringExtra(RESTORE_FILE_PATH_KEY));
+        final File bakFile = new File(uri.getPath());
         final File tmpFile = new File(
                 getExternalCacheDir(),
                 bakFile.getName()
         );
         tmpFile.getParentFile().mkdirs();
 
-        try (FileInputStream fis = new FileInputStream(bakFile)) {
+        try (InputStream is = getContentResolver().openInputStream(uri)) {
+            if (is == null) {
+                throw new FileNotFoundException("Cannot open " + bakFile);
+            }
             try (FileOutputStream fos = new FileOutputStream(tmpFile)) {
 
-                copyStream(fis, fos);
+                copyStream(is, fos);
             }
-        } catch (IOException ioe) {
+        } catch (IOException | NullPointerException ioe) {
             ioe.printStackTrace();
         }
 
@@ -290,9 +308,7 @@ public class SelfBackupActivity extends Activity {
                 showMessage("Restore file from \"" + tmpFile.getAbsolutePath() + "\".");
                 exec(sb.toString());
                 showMessage("Restored.");
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
+            } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }
 
@@ -380,7 +396,7 @@ public class SelfBackupActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CHOOSE_RESTORE_FILE && resultCode == RESULT_OK) {
             Uri selectedFile = data.getData(); //The uri with the location of the file
-            final String filePath = selectedFile.getPath();
+            final String filePath = selectedFile.toString();
 
             if (!filePath.endsWith(".tar.gz") && !filePath.endsWith(".tgz")) {
                 showMessage("File format error.");
